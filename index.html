@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>김효진 Hyojin Kim</title>
+    <style>
+        body { background-color: #f5efe8; font-family: 'Serif', Georgia, serif; color: #333; margin: 0; }
+        .page { display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+        .hidden { display: none !important; }
+
+        /* 메인 페이지 */
+        .main-header h1 { font-size: 0.8rem; letter-spacing: 4px; font-weight: 300; text-transform: uppercase; }
+        .main-title { font-size: 3rem; margin: 10px 0; font-weight: 500; }
+        .sub-title { font-size: 1.1rem; margin-bottom: 50px; opacity: 0.8; }
+        .lang-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 90%; max-width: 500px; }
+        .lang-box { border: 1px solid #dcd3c9; padding: 30px; text-align: center; cursor: pointer; background: #fff; transition: background 0.3s; }
+        .lang-box:hover { background-color: #eee8e1; }
+
+        /* 상세 페이지 */
+        .detail-nav { width: 100%; max-width: 860px; display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+        .brand-title { letter-spacing: 4px; font-weight: 300; font-size: 0.9rem; }
+        .menu-tabs { display: flex; width: 100%; max-width: 860px; border-bottom: 1px solid #dcd3c9; margin-bottom: 40px; }
+        .tab { padding: 20px 30px; border: 1px solid #dcd3c9; border-bottom: none; cursor: pointer; background: #fcfbf9; margin-right: -1px; white-space: nowrap; }
+        .tab.active { background: #a67c52; color: #fff; border-color: #a67c52; }
+        
+        .content-container { width: 100%; max-width: 860px; margin: 0 auto; }
+        .footer-paging { width: 100%; max-width: 860px; display: flex; justify-content: space-between; align-items: center; padding: 40px 0; border-top: 1px solid #dcd3c9; margin-top: 40px; }
+        .btn-box { padding: 15px 30px; border: 1px solid #dcd3c9; cursor: pointer; color: #777; background: #fff; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 메인 페이지 -->
+    <div id="main-page" class="page">
+        <div class="main-header"><h1>Hyojin Kim</h1></div>
+        <div class="main-title">김효진</div>
+        <div class="sub-title">언어를 선택해주세요 · Select your language</div>
+        <div class="lang-grid">
+            <div class="lang-box" onclick="showDetail()"><span>한국어</span><br><small>KOREAN</small></div>
+            <div class="lang-box" onclick="showDetail()"><span>English</span><br><small>영어</small></div>
+            <div class="lang-box" onclick="showDetail()"><span>日本語</span><br><small>일본어</small></div>
+            <div class="lang-box" onclick="showDetail()"><span>中文</span><br><small>중국어</small></div>
+        </div>
+    </div>
+
+    <!-- 2. 상세 페이지 -->
+    <div id="detail-page" class="page hidden">
+        <div class="detail-nav">
+            <div onclick="showMain()" style="cursor:pointer;">< 언어</div>
+            <div class="brand-title">M U G U O K</div>
+        </div>
+        
+        <div class="menu-tabs">
+            <div class="tab active">삼계백반</div>
+            <div class="tab">오징어 닭무침</div>
+            <div class="tab">매운 닭찜</div>
+            <div class="tab">청국 닭도리탕</div>
+            <div class="tab">신메뉴</div>
+        </div>
+
+        <main class="content-container">
+            <!-- Frame 35085.jpg 적용 -->
+            <img src="Frame 35085.jpg" alt="삼계백반 상세" style="width: 100%; display: block;">
+        </main>
+
+        <footer class="footer-paging">
+            <div class="btn-box">< PREV</div>
+            <div class="btn-box">NEXT ></div>
+        </footer>
+    </div>
+
+    <script>
+        function showDetail() {
+            document.getElementById('main-page').classList.add('hidden');
+            document.getElementById('detail-page').classList.remove('hidden');
+        }
+        function showMain() {
+            document.getElementById('detail-page').classList.add('hidden');
+            document.getElementById('main-page').classList.remove('hidden');
+        }
+    </script>
+</body>
