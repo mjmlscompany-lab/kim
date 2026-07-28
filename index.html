@@ -136,7 +136,8 @@
       <select id="f-schedule">
         <option>온라인예약</option>
         <option selected>전화예약</option>
-        <option>예약불필요</option>
+        <option>숙박판매예약</option>
+        <option>카카오톡예약</option>
       </select>
     </div>
 
@@ -538,6 +539,37 @@
       return idx !== undefined && idx !== -1 ? (r[idx] || '').trim() : '';
     }
 
+    function formatPhoneToken(token) {
+      const digits = token.replace(/\D/g, '');
+      if (digits.length === 11) {
+        return digits.slice(0, 3) + '-' + digits.slice(3, 7) + '-' + digits.slice(7);
+      }
+      if (digits.length === 10) {
+        if (digits.startsWith('02')) {
+          return digits.slice(0, 2) + '-' + digits.slice(2, 6) + '-' + digits.slice(6);
+        }
+        return digits.slice(0, 3) + '-' + digits.slice(3, 6) + '-' + digits.slice(6);
+      }
+      if (digits.length === 9 && digits.startsWith('02')) {
+        return digits.slice(0, 2) + '-' + digits.slice(2, 5) + '-' + digits.slice(5);
+      }
+      return token;
+    }
+
+    function normalizePhoneText(text) {
+      if (!text) return text;
+      return text.replace(/\d[\d.\-]{7,12}\d/g, (m) => formatPhoneToken(m));
+    }
+
+    function detectReservation(text) {
+      const t = text || '';
+      if (/유선\s*예약|전화\s*예약|사전\s*예약/.test(t)) return { required: '예', schedule: '전화예약' };
+      if (/홈페이지\s*예약/.test(t)) return { required: '예', schedule: '온라인예약' };
+      if (/카카오톡/.test(t)) return { required: '예', schedule: '카카오톡예약' };
+      if (/네이버/.test(t)) return { required: '아니오', schedule: null };
+      return { required: '아니오', schedule: null };
+    }
+
     function populateForm(r) {
       const city = cleanCityName(get(r, '지역'));
       const name = cleanFacilityName(get(r, '시설사명'));
@@ -558,9 +590,14 @@
       document.getElementById('raw-hours').value = hoursRaw;
       fireInput('raw-hours');
 
-      document.getElementById('raw-notice-visible').value = get(r, '유의사항');
+      const noticeText = get(r, '유의사항');
+      const resv = detectReservation(noticeText);
+      document.getElementById('f-reserve').value = resv.required;
+      if (resv.schedule) document.getElementById('f-schedule').value = resv.schedule;
+
+      document.getElementById('raw-notice-visible').value = noticeText;
       document.getElementById('raw-intro-visible').value = get(r, '업체소개');
-      document.getElementById('raw-phone-visible').value = get(r, '연락처');
+      document.getElementById('raw-phone-visible').value = normalizePhoneText(get(r, '연락처'));
       document.getElementById('raw-address-plain-visible').value = get(r, '주소');
       generateUsagePreview();
 
