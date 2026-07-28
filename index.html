@@ -150,6 +150,7 @@
     </div>
 
     <input type="text" id="raw-hours" style="display:none;">
+    <textarea id="raw-hours-display" style="display:none;"></textarea>
   </div>
 
   <hr style="margin:32px 0; border:none; border-top:1px solid var(--border);">
@@ -261,9 +262,8 @@
       const intro = document.getElementById('raw-intro-visible').value.trim();
       const addr = document.getElementById('raw-address-plain-visible').value.trim();
       const phone = document.getElementById('raw-phone-visible').value.trim();
-      const openTime = document.getElementById('f-opentime').value || '';
-      const closeTime = document.getElementById('f-closetime').value || '';
-      const hours = openTime && closeTime ? `${openTime} ~ ${closeTime}` : (openTime || closeTime || '');
+      const hoursRaw = document.getElementById('raw-hours-display').value.trim();
+      const hoursLines = hoursRaw.split('\n').map(l => l.trim()).filter(Boolean);
       const closedText = closedDaysList.length > 0 ? closedDaysList.join(', ') : '연중무휴';
 
       let html = `<div>[${escapeHtml(name)} 이용안내]</div><div><br></div>`;
@@ -280,7 +280,14 @@
       if (intro) html += `<div>${escapeHtml(intro)}</div><div><br></div>`;
       html += `<div>주소 : 충남 ${escapeHtml(addr)}</div>`;
       html += `<div>전화번호 : ${escapeHtml(phone)}</div>`;
-      html += `<div>운영시간 : ${escapeHtml(hours)}</div>`;
+      if (hoursLines.length === 0) {
+        html += `<div>운영시간 : </div>`;
+      } else {
+        html += `<div>운영시간 : ${escapeHtml(hoursLines[0])}</div>`;
+        for (let i = 1; i < hoursLines.length; i++) {
+          html += `<div>${escapeHtml(hoursLines[i])}</div>`;
+        }
+      }
       html += `<div>휴무안내 : ${escapeHtml(closedText)}</div>`;
 
       document.getElementById('usagePreview').innerHTML = html;
@@ -546,6 +553,7 @@
 
       let hoursRaw = get(r, '운영시간');
       const closing = get(r, '마감시간');
+      document.getElementById('raw-hours-display').value = hoursRaw;
       if (closing) hoursRaw += ' ' + closing;
       document.getElementById('raw-hours').value = hoursRaw;
       fireInput('raw-hours');
