@@ -696,8 +696,7 @@
 
   <div id="region-panel-gyeonggi" class="region-panel" style="display:none;">
     <div class="card" style="border:1px dashed var(--border-strong); border-radius:8px; padding:24px; text-align:center; color:var(--text-muted);">
-      경기 투어패스 시트 샘플을 기다리고 있어요.<br>
-      시트 헤더 포함해서 채팅으로 보내주시면 이 탭에 맞춰 만들어드릴게요.
+      경기 투어패스 시트 샘플 제작중.<br>
     </div>
   </div>
 
@@ -717,4 +716,3 @@
 </div>
 </body>
 </html>
-
