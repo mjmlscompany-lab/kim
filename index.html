@@ -125,7 +125,7 @@
 
     <div class="field">
       <label><span class="check">✓</span> 기초상품명</label>
-      <input type="text" id="f-productname" value="BVT_[충남/서산] 명가네힐링농장" readonly>
+      <input type="text" id="f-productname" value="TY_[충남/서산] 명가네힐링농장" readonly>
     </div>
 
     <div class="field full">
@@ -654,7 +654,7 @@
       const name = cleanFacilityName(get(r, '시설사명'));
 
       document.getElementById('f-supplier').value = get(r, '공급처 코드');
-      document.getElementById('f-productname').value = `BVT_[충남/${city}] ${name}`;
+      document.getElementById('f-productname').value = `TY_[충남/${city}] ${name}`;
 
       document.getElementById('raw-shortdesc').value = get(r, '제공내역');
       fireInput('raw-shortdesc');
@@ -716,3 +716,4 @@
 </div>
 </body>
 </html>
+
