@@ -256,6 +256,58 @@
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    const weekOrder = ['월', '화', '수', '목', '금', '토', '일'];
+    const dayFullNames = { '일': '일요일', '월': '월요일', '화': '화요일', '수': '수요일', '목': '목요일', '금': '금요일', '토': '토요일' };
+
+    function formatDayList(days) {
+      const uniqueOrdered = weekOrder.filter(d => days.includes(d));
+      if (uniqueOrdered.length === 0) return '';
+      const groups = [];
+      let start = uniqueOrdered[0], prevIdx = weekOrder.indexOf(start);
+      for (let i = 1; i < uniqueOrdered.length; i++) {
+        const d = uniqueOrdered[i];
+        const idx = weekOrder.indexOf(d);
+        if (idx === prevIdx + 1) { prevIdx = idx; }
+        else { groups.push([start, weekOrder[prevIdx]]); start = d; prevIdx = idx; }
+      }
+      groups.push([start, weekOrder[prevIdx]]);
+      return groups.map(([a, b]) => a === b ? dayFullNames[a] : `${dayFullNames[a]}~${dayFullNames[b]}`).join(', ');
+    }
+
+    function parseDaySegment(seg) {
+      const parts = seg.split('~').map(s => s.trim()).filter(Boolean);
+      if (parts.length === 1) return [parts[0]];
+      const startIdx = weekOrder.indexOf(parts[0]);
+      const endIdx = weekOrder.indexOf(parts[parts.length - 1]);
+      if (startIdx === -1 || endIdx === -1) return parts;
+      const result = [];
+      if (startIdx <= endIdx) {
+        for (let i = startIdx; i <= endIdx; i++) result.push(weekOrder[i]);
+      } else {
+        for (let i = startIdx; i < weekOrder.length; i++) result.push(weekOrder[i]);
+        for (let i = 0; i <= endIdx; i++) result.push(weekOrder[i]);
+      }
+      return result;
+    }
+
+    function expandClusterDays(clusterText) {
+      const commaSegments = clusterText.split(',').map(s => s.trim()).filter(Boolean);
+      let allDays = [];
+      commaSegments.forEach(seg => { allDays = allDays.concat(parseDaySegment(seg)); });
+      return formatDayList(allDays);
+    }
+
+    const dayAltPattern = weekOrder.concat(['일']).join('|');
+    const dayClusterRe = new RegExp(`(?<![\\uAC00-\\uD7A3\\d])((?:${dayAltPattern})(?:\\s*[,~]\\s*(?:${dayAltPattern}))*)(?![\\uAC00-\\uD7A3\\d])`, 'g');
+
+    function expandOperatingHoursText(raw) {
+      if (!raw) return raw;
+      return raw.replace(dayClusterRe, (match) => {
+        const formatted = expandClusterDays(match);
+        return formatted || match;
+      });
+    }
+
     function generateUsagePreview() {
       const name = extractFacilityName();
       const noticeRaw = document.getElementById('raw-notice-visible').value;
@@ -264,9 +316,9 @@
       const intro = document.getElementById('raw-intro-visible').value.trim();
       const addr = document.getElementById('raw-address-plain-visible').value.trim();
       const phone = document.getElementById('raw-phone-visible').value.trim();
-      const hoursRaw = document.getElementById('raw-hours-display').value.trim();
+      const hoursRaw = expandOperatingHoursText(document.getElementById('raw-hours-display').value.trim());
       const hoursLines = hoursRaw.split('\n').map(l => l.trim()).filter(Boolean);
-      const closedText = closedDaysList.length > 0 ? closedDaysList.join(', ') : '연중무휴';
+      const closedText = closedDaysList.length > 0 ? `매주 ${formatDayList(closedDaysList)}` : '연중무휴';
 
       let html = `<div>[${escapeHtml(name)} 이용안내]</div><div><br></div>`;
       if (noticeLines.length > 0) {
@@ -617,4 +669,3 @@
 </div>
 </body>
 </html>
-
