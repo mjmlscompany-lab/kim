@@ -106,7 +106,7 @@
     <div id="facilityTabs" style="display:none; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
   </div>
 
-  <h1>② 기초상품 입력 폼 (시안 — 전체 필드)</h1>
+  <h1>② 기초상품 입력 폼 (시안 2차 — 전체 필드)</h1>
 
   <div class="form-grid">
     <div class="field">
@@ -598,6 +598,11 @@
       return (region || '').replace(/^\d+\)\s*/, '').trim();
     }
 
+    function normalizeTilde(text) {
+      // Unify look-alike range separators (fullwidth tilde, wave dash, en/em dash, minus) to ASCII ~
+      return (text || '').replace(/[\uFF5E\u301C\u2013\u2014\u2212]/g, '~');
+    }
+
     document.getElementById('parseSheetBtn').addEventListener('click', () => {
       const text = document.getElementById('pasteArea').value;
       const statusEl = document.getElementById('sheetStatus');
@@ -712,7 +717,7 @@
       document.getElementById('raw-holiday').value = get(r, '휴무일');
       fireInput('raw-holiday');
 
-      let hoursRaw = get(r, '운영시간');
+      let hoursRaw = normalizeTilde(get(r, '운영시간'));
       const closing = get(r, '마감시간');
       document.getElementById('raw-hours-display').value = hoursRaw;
       if (closing) hoursRaw += ' ' + closing;
