@@ -94,8 +94,7 @@
   <div class="content-area">
   <div class="wrap">
 
-  <div id="region-panel-chungnam" class="region-panel">
-  <h1>① 시트 불러오기</h1>
+  <h1>① 시트 불러오기 <span id="currentRegionLabel" style="font-size:12px; font-weight:400; color:var(--green); border:1px solid var(--green); border-radius:12px; padding:2px 10px; vertical-align:middle;">충남</span></h1>
   <div class="card" style="border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:24px;">
     <textarea id="pasteArea" style="width:100%; min-height:320px; border:1px solid var(--border); border-radius:6px; padding:10px; font-size:12px; font-family:ui-monospace,Menlo,monospace; background:var(--panel); color:var(--text);" placeholder="구글 시트에서 헤더 행을 포함해 복사한 내용을 여기에 붙여넣으세요"></textarea>
     <div style="display:flex; gap:8px; margin-top:8px;">
@@ -107,7 +106,7 @@
     <div id="facilityTabs" style="display:none; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
   </div>
 
-  <h1>② 기초상품 입력 폼 (시안 2차 — 전체 필드)</h1>
+  <h1>② 기초상품 입력 폼 (전체 필드)</h1>
 
   <div class="form-grid">
     <div class="field">
@@ -125,7 +124,7 @@
 
     <div class="field">
       <label><span class="check">✓</span> 기초상품명</label>
-      <input type="text" id="f-productname" value="TY_[충남/서산] 명가네힐링농장" readonly>
+      <input type="text" id="f-productname" value="TV_[충남/서산] 명가네힐링농장" readonly>
     </div>
 
     <div class="field full">
@@ -358,7 +357,7 @@
         html += `<div><br></div>`;
       }
       if (intro) html += `<div>${escapeHtml(intro)}</div><div><br></div>`;
-      html += `<div>주소 : 충남 ${escapeHtml(addr)}</div>`;
+      html += `<div>주소 : ${escapeHtml(REGION_PROFILES[currentRegion].label)} ${escapeHtml(addr)}</div>`;
       html += `<div>전화번호 : ${escapeHtml(phone)}</div>`;
       if (hoursLines.length === 0) {
         html += `<div>운영시간 : </div>`;
@@ -522,16 +521,64 @@
       return -1;
     }
 
-    function buildSheetHeaderMap(headerRow) {
+    const REGION_PROFILES = {
+      chungnam: {
+        label: '충남',
+        initials: 'TV',
+        region: '지역',
+        facilityName: '시설사명',
+        intro: '업체소개',
+        offer: '제공내역',
+        address: '주소',
+        contact: '연락처',
+        notice: '유의사항',
+        hours: '운영시간',
+        closing: '마감시간',
+        holiday: '휴무일',
+        supplierCode: '공급처 코드'
+      },
+      gyeonggi: {
+        label: '경기',
+        initials: 'KT',
+        region: '지역',
+        facilityName: '시설사명',
+        intro: '시설소개',
+        offer: '제공내역',
+        address: '주소',
+        contact: '연락처',
+        notice: '유의사항',
+        hours: '운영시간',
+        closing: null,
+        holiday: '휴무일',
+        supplierCode: '공급처코드'
+      }
+    };
+    let currentRegion = 'chungnam';
+
+    function buildSheetHeaderMap(headerRow, profile) {
       const map = {};
-      const simple = ['참여구분', '지역', '구분', '카테고리', '시설사명', '업체소개', '제공내역', '주소',
-                       '유의사항', '운영시간', '마감시간', '휴무일', '공급처명', '공급처 코드'];
-      simple.forEach(key => {
-        const idx = headerRow.findIndex(c => (c || '').trim() === key);
+      const fieldPairs = [
+        ['지역', profile.region],
+        ['시설사명', profile.facilityName],
+        ['업체소개', profile.intro],
+        ['제공내역', profile.offer],
+        ['주소', profile.address],
+        ['유의사항', profile.notice],
+        ['운영시간', profile.hours],
+        ['휴무일', profile.holiday],
+        ['SUPPLIER_CODE', profile.supplierCode]
+      ];
+      fieldPairs.forEach(([key, label]) => {
+        if (!label) return;
+        const idx = headerRow.findIndex(c => (c || '').trim() === label);
         if (idx !== -1) map[key] = idx;
       });
+      if (profile.closing) {
+        const idx = headerRow.findIndex(c => (c || '').trim() === profile.closing);
+        if (idx !== -1) map['마감시간'] = idx;
+      }
       // 연락처: 1st occurrence = 업체 연락처
-      map['연락처'] = nthIndexOf(headerRow, '연락처', 1);
+      map['연락처'] = nthIndexOf(headerRow, profile.contact, 1);
       // 성인/청소년/소인: 1st occurrence = 정상가, 2nd occurrence = 입금가
       map['성인_정상가'] = nthIndexOf(headerRow, '성인', 1);
       map['성인_입금가'] = nthIndexOf(headerRow, '성인', 2);
@@ -563,7 +610,7 @@
         statusEl.textContent = '헤더 행("시설사명" 등)을 찾지 못했어요. 헤더 행을 포함해서 복사했는지 확인해 주세요.';
         return;
       }
-      sheetHeaderMap = buildSheetHeaderMap(table[headerIdx]);
+      sheetHeaderMap = buildSheetHeaderMap(table[headerIdx], REGION_PROFILES[currentRegion]);
       if (sheetHeaderMap['시설사명'] === undefined) {
         statusEl.textContent = '"시설사명" 컬럼을 인식하지 못했어요.';
         return;
@@ -653,8 +700,8 @@
       const city = cleanCityName(get(r, '지역'));
       const name = cleanFacilityName(get(r, '시설사명'));
 
-      document.getElementById('f-supplier').value = get(r, '공급처 코드');
-      document.getElementById('f-productname').value = `TY_[충남/${city}] ${name}`;
+      document.getElementById('f-supplier').value = get(r, 'SUPPLIER_CODE');
+      document.getElementById('f-productname').value = `${REGION_PROFILES[currentRegion].initials}_[${REGION_PROFILES[currentRegion].label}/${city}] ${name}`;
 
       document.getElementById('raw-shortdesc').value = get(r, '제공내역');
       fireInput('raw-shortdesc');
@@ -674,7 +721,7 @@
       document.getElementById('f-reserve').value = resv.required;
       document.getElementById('f-schedule').value = resv.schedule ? resv.schedule : '';
 
-      document.getElementById('raw-region').value = '충남';
+      document.getElementById('raw-region').value = REGION_PROFILES[currentRegion].label;
       document.getElementById('raw-facilityname-price').value = name;
 
       document.getElementById('raw-notice-visible').value = noticeText;
@@ -692,21 +739,20 @@
       syncPriceFields();
     }
   </script>
-  </div>
-
-  <div id="region-panel-gyeonggi" class="region-panel" style="display:none;">
-    <div class="card" style="border:1px dashed var(--border-strong); border-radius:8px; padding:24px; text-align:center; color:var(--text-muted);">
-      경기 투어패스 시트 샘플 제작중.<br>
-    </div>
-  </div>
 
   <script>
     document.querySelectorAll('.region-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.region-tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        document.querySelectorAll('.region-panel').forEach(p => p.style.display = 'none');
-        document.getElementById(`region-panel-${btn.dataset.region}`).style.display = 'block';
+        currentRegion = btn.dataset.region;
+        document.getElementById('currentRegionLabel').textContent = REGION_PROFILES[currentRegion].label;
+        document.getElementById('pasteArea').value = '';
+        document.getElementById('sheetStatus').textContent = `${REGION_PROFILES[currentRegion].label} 시트를 붙여넣어 주세요.`;
+        document.getElementById('facilityTabs').innerHTML = '';
+        document.getElementById('facilityTabs').style.display = 'none';
+        sheetRows = [];
+        activeTabIdx = null;
       });
     });
   </script>
@@ -716,4 +762,3 @@
 </div>
 </body>
 </html>
-
