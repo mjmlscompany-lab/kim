@@ -106,25 +106,17 @@
     <div id="facilityTabs" style="display:none; flex-wrap:wrap; gap:6px; margin-top:12px;"></div>
   </div>
 
-  <h1>② 기초상품 입력 폼 (전체 필드)</h1>
+  <h1>② 기초상품 입력 폼 (시안 2차 — 전체 필드)</h1>
 
   <div class="form-grid">
     <div class="field">
       <label><span class="check">✓</span> 공급처 코드</label>
       <input type="text" id="f-supplier" value="AG2406262" readonly>
     </div>
-    <div class="field">
-      <label><span class="check">✓</span> 상태</label>
-      <select id="f-status">
-        <option selected>정상</option>
-        <option>중지</option>
-        <option>대기</option>
-      </select>
-    </div>
 
     <div class="field">
       <label><span class="check">✓</span> 기초상품명</label>
-      <input type="text" id="f-productname" value="TV_[충남/서산] 명가네힐링농장" readonly>
+      <input type="text" id="f-productname" value="CT_[충남/서산] 명가네힐링농장" readonly>
     </div>
 
     <div class="field full">
@@ -341,8 +333,13 @@
       const intro = document.getElementById('raw-intro-visible').value.trim();
       const addr = document.getElementById('raw-address-plain-visible').value.trim();
       const phone = document.getElementById('raw-phone-visible').value.trim();
-      const hoursRaw = expandOperatingHoursText(document.getElementById('raw-hours-display').value.trim());
-      const hoursLines = hoursRaw.split('\n').map(l => l.trim()).filter(Boolean);
+      const hoursRawFull = document.getElementById('raw-hours-display').value.trim();
+      const hoursLines = hoursRawFull.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+        const hasTimePattern = /\d{1,2}:\d{2}/.test(line);
+        const hasRange = /~/.test(line);
+        if (hasTimePattern && !hasRange) return '시트누락';
+        return expandOperatingHoursText(line);
+      });
       const closedText = closedDaysList.length > 0 ? `매주 ${formatDayList(closedDaysList)}` : '연중무휴';
 
       let html = `<div>[${escapeHtml(name)} 이용안내]</div><div><br></div>`;
@@ -524,7 +521,7 @@
     const REGION_PROFILES = {
       chungnam: {
         label: '충남',
-        initials: 'TV',
+        initials: 'CT',
         region: '지역',
         facilityName: '시설사명',
         intro: '업체소개',
@@ -535,7 +532,8 @@
         hours: '운영시간',
         closing: '마감시간',
         holiday: '휴무일',
-        supplierCode: '공급처 코드'
+        supplierCode: '공급처 코드',
+        category: '구분'
       },
       gyeonggi: {
         label: '경기',
@@ -550,7 +548,8 @@
         hours: '운영시간',
         closing: null,
         holiday: '휴무일',
-        supplierCode: '공급처코드'
+        supplierCode: '공급처코드',
+        category: '구분'
       }
     };
     let currentRegion = 'chungnam';
@@ -566,7 +565,8 @@
         ['유의사항', profile.notice],
         ['운영시간', profile.hours],
         ['휴무일', profile.holiday],
-        ['SUPPLIER_CODE', profile.supplierCode]
+        ['SUPPLIER_CODE', profile.supplierCode],
+        ['CATEGORY', profile.category]
       ];
       fieldPairs.forEach(([key, label]) => {
         if (!label) return;
@@ -698,7 +698,9 @@
 
     function populateForm(r) {
       const city = cleanCityName(get(r, '지역'));
-      const name = cleanFacilityName(get(r, '시설사명'));
+      let name = cleanFacilityName(get(r, '시설사명'));
+      const category = get(r, 'CATEGORY').trim();
+      if (category.includes('할인')) name = `${name}(할인)`;
 
       document.getElementById('f-supplier').value = get(r, 'SUPPLIER_CODE');
       document.getElementById('f-productname').value = `${REGION_PROFILES[currentRegion].initials}_[${REGION_PROFILES[currentRegion].label}/${city}] ${name}`;
