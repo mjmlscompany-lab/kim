@@ -266,7 +266,8 @@
 
     function extractFacilityName() {
       const el = document.getElementById('raw-facilityname-price');
-      return el ? el.value.trim() : '';
+      const val = el ? el.value.trim() : '';
+      return val.replace(/\(할인\)$/, '').trim();
     }
 
     function escapeHtml(str) {
