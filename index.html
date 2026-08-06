@@ -549,11 +549,27 @@
         hours: '운영시간',
         closing: null,
         holiday: '휴무일',
-        supplierCode: '공급처코드',
-        category: '구분'
+        supplierCode: '공급처 코드',
+        category: '구분',
+        priceLabels: {
+          '성인_정상가': ['정상가 성인'],
+          '청소년_정상가': ['정상가 청소년'],
+          '소인_정상가': ['정상가 소인'],
+          '성인_입금가': ['입금가 성인'],
+          '청소년_입금가': ['입금가 청소년', '임금가 청소년'],
+          '소인_입금가': ['입금가 소인']
+        }
       }
     };
     let currentRegion = 'chungnam';
+
+    function findLabelIndex(headerRow, labels) {
+      for (const label of labels) {
+        const idx = headerRow.findIndex(c => (c || '').trim() === label);
+        if (idx !== -1) return idx;
+      }
+      return -1;
+    }
 
     function buildSheetHeaderMap(headerRow, profile) {
       const map = {};
@@ -564,7 +580,6 @@
         ['제공내역', profile.offer],
         ['주소', profile.address],
         ['유의사항', profile.notice],
-        ['운영시간', profile.hours],
         ['휴무일', profile.holiday],
         ['SUPPLIER_CODE', profile.supplierCode],
         ['CATEGORY', profile.category]
@@ -574,19 +589,33 @@
         const idx = headerRow.findIndex(c => (c || '').trim() === label);
         if (idx !== -1) map[key] = idx;
       });
+      // 운영시간: use the LAST matching column (sheets sometimes repeat the header;
+      // the later column tends to hold the full day+time text, not just a bare open time)
+      if (profile.hours) {
+        let lastIdx = -1;
+        headerRow.forEach((c, i) => { if ((c || '').trim() === profile.hours) lastIdx = i; });
+        if (lastIdx !== -1) map['운영시간'] = lastIdx;
+      }
       if (profile.closing) {
         const idx = headerRow.findIndex(c => (c || '').trim() === profile.closing);
         if (idx !== -1) map['마감시간'] = idx;
       }
       // 연락처: 1st occurrence = 업체 연락처
       map['연락처'] = nthIndexOf(headerRow, profile.contact, 1);
-      // 성인/청소년/소인: 1st occurrence = 정상가, 2nd occurrence = 입금가
-      map['성인_정상가'] = nthIndexOf(headerRow, '성인', 1);
-      map['성인_입금가'] = nthIndexOf(headerRow, '성인', 2);
-      map['청소년_정상가'] = nthIndexOf(headerRow, '청소년', 1);
-      map['청소년_입금가'] = nthIndexOf(headerRow, '청소년', 2);
-      map['소인_정상가'] = nthIndexOf(headerRow, '소인', 1);
-      map['소인_입금가'] = nthIndexOf(headerRow, '소인', 2);
+      if (profile.priceLabels) {
+        // Region uses distinct compound column labels (e.g. "정상가 성인")
+        Object.keys(profile.priceLabels).forEach(key => {
+          map[key] = findLabelIndex(headerRow, profile.priceLabels[key]);
+        });
+      } else {
+        // Default: 성인/청소년/소인 repeated as bare labels; 1st occurrence = 정상가, 2nd = 입금가
+        map['성인_정상가'] = nthIndexOf(headerRow, '성인', 1);
+        map['성인_입금가'] = nthIndexOf(headerRow, '성인', 2);
+        map['청소년_정상가'] = nthIndexOf(headerRow, '청소년', 1);
+        map['청소년_입금가'] = nthIndexOf(headerRow, '청소년', 2);
+        map['소인_정상가'] = nthIndexOf(headerRow, '소인', 1);
+        map['소인_입금가'] = nthIndexOf(headerRow, '소인', 2);
+      }
       return map;
     }
 
