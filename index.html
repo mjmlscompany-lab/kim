@@ -89,6 +89,7 @@
     <div class="sidebar-title">투어패스 지역</div>
     <button type="button" class="sidebar-item active region-tab-btn" data-region="chungnam">충남 투어패스</button>
     <button type="button" class="sidebar-item region-tab-btn" data-region="gyeonggi">경기 투어패스</button>
+    <button type="button" class="sidebar-item region-tab-btn" data-region="cheongju">청주 투어패스</button>
   </nav>
 
   <div class="content-area">
@@ -198,6 +199,17 @@
     const dayChars = ['일','월','화','수','목','금','토'];
     let closedDaysList = [];
 
+    const dayTokenRe = /^(일|월|화|수|목|금|토)(?:요일)?(?:\s*휴무일?)?$/;
+    const dayRangeTokenRe = /^(일|월|화|수|목|금|토)(?:요일)?\s*~\s*(일|월|화|수|목|금|토)(?:요일)?(?:\s*휴무일?)?$/;
+
+    function extractDaysFromToken(tok) {
+      const rangeMatch = tok.match(dayRangeTokenRe);
+      if (rangeMatch) return parseDaySegment(`${rangeMatch[1]}~${rangeMatch[2]}`);
+      const singleMatch = tok.match(dayTokenRe);
+      if (singleMatch) return [singleMatch[1]];
+      return [];
+    }
+
     function highlightHolidays(raw) {
       document.querySelectorAll('.day').forEach(el => el.classList.remove('selected'));
       closedDaysList = [];
@@ -205,9 +217,7 @@
       const tokens = raw.split(/[,\n\/]/).map(t => t.trim()).filter(Boolean);
       const matched = new Set();
       tokens.forEach(tok => {
-        dayChars.forEach(d => {
-          if (tok === d || tok === d + '요일') matched.add(d);
-        });
+        extractDaysFromToken(tok).forEach(d => matched.add(d));
       });
       matched.forEach(d => {
         const el = document.querySelector(`.day[data-day="${d}"]`);
@@ -442,6 +452,7 @@
   <div style="display:none;">
     <input type="text" id="raw-region" value="충남">
     <input type="text" id="raw-facilityname-price">
+    <input type="text" id="raw-categorytag">
     <input type="text" id="raw-adult-normal">
     <input type="text" id="raw-adult-settle">
     <input type="text" id="raw-teen-normal">
@@ -454,7 +465,9 @@
     function syncPriceFields() {
       const region = document.getElementById('raw-region').value.trim();
       const facility = document.getElementById('raw-facilityname-price').value.trim();
-      document.getElementById('f-pricename').value = facility ? `[${region}] ${facility}` : `[${region}]`;
+      const categoryTag = document.getElementById('raw-categorytag').value.trim();
+      const displayName = categoryTag ? `(${categoryTag})${facility}` : facility;
+      document.getElementById('f-pricename').value = displayName ? `[${region}] ${displayName}` : `[${region}]`;
 
       document.getElementById('f-price-adult-normal').value = document.getElementById('raw-adult-normal').value;
       document.getElementById('f-price-adult-settle').value = document.getElementById('raw-adult-settle').value;
@@ -464,7 +477,7 @@
       document.getElementById('f-price-child-settle').value = document.getElementById('raw-child-settle').value;
     }
 
-    ['raw-region', 'raw-facilityname-price', 'raw-adult-normal', 'raw-adult-settle',
+    ['raw-region', 'raw-facilityname-price', 'raw-categorytag', 'raw-adult-normal', 'raw-adult-settle',
      'raw-teen-normal', 'raw-teen-settle', 'raw-child-normal', 'raw-child-settle'].forEach(id => {
       document.getElementById(id).addEventListener('input', syncPriceFields);
     });
@@ -541,11 +554,12 @@
         initials: 'KT',
         region: '지역',
         facilityName: '시설사명',
-        intro: '시설소개',
+        intro: '업체소개',
         offer: '제공내역',
         address: '주소',
         contact: '연락처',
         notice: '유의사항',
+        noticeDetailed: '유의사항(바코드) - 필수내용 포함 구체적으로',
         hours: '운영시간',
         closing: null,
         holiday: '휴무일',
@@ -559,6 +573,23 @@
           '청소년_입금가': ['입금가 청소년', '임금가 청소년'],
           '소인_입금가': ['입금가 소인']
         }
+      },
+      cheongju: {
+        label: '청주',
+        initials: 'CJ',
+        region: null,
+        facilityName: '시설사명',
+        intro: '업체소개',
+        offer: '제공내역',
+        address: '주소',
+        contact: '연락처',
+        notice: '유의사항',
+        hours: '운영시간(디자인 x)',
+        closing: '마감시간(디자인 x)',
+        holiday: '휴무일(디자인 x)',
+        supplierCode: '공급처 코드',
+        category: '구분',
+        categoryTag: '카테고리'
       }
     };
     let currentRegion = 'chungnam';
@@ -580,9 +611,11 @@
         ['제공내역', profile.offer],
         ['주소', profile.address],
         ['유의사항', profile.notice],
+        ['유의사항_상세', profile.noticeDetailed],
         ['휴무일', profile.holiday],
         ['SUPPLIER_CODE', profile.supplierCode],
-        ['CATEGORY', profile.category]
+        ['CATEGORY', profile.category],
+        ['CATEGORY_TAG', profile.categoryTag]
       ];
       fieldPairs.forEach(([key, label]) => {
         if (!label) return;
@@ -738,7 +771,9 @@
       if (category.includes('할인')) name = `${name}(할인)`;
 
       document.getElementById('f-supplier').value = get(r, 'SUPPLIER_CODE');
-      document.getElementById('f-productname').value = `${REGION_PROFILES[currentRegion].initials}_[${REGION_PROFILES[currentRegion].label}/${city}] ${name}`;
+      const profile = REGION_PROFILES[currentRegion];
+      const regionTag = city ? `${profile.label}/${city}` : profile.label;
+      document.getElementById('f-productname').value = `${profile.initials}_[${regionTag}] ${name}`;
 
       document.getElementById('raw-shortdesc').value = get(r, '제공내역');
       fireInput('raw-shortdesc');
@@ -753,13 +788,14 @@
       document.getElementById('raw-hours').value = hoursRaw;
       fireInput('raw-hours');
 
-      const noticeText = get(r, '유의사항');
+      const noticeText = get(r, '유의사항_상세') || get(r, '유의사항');
       const resv = detectReservation(noticeText);
       document.getElementById('f-reserve').value = resv.required;
       document.getElementById('f-schedule').value = resv.schedule ? resv.schedule : '';
 
       document.getElementById('raw-region').value = REGION_PROFILES[currentRegion].label;
       document.getElementById('raw-facilityname-price').value = name;
+      document.getElementById('raw-categorytag').value = get(r, 'CATEGORY_TAG');
 
       document.getElementById('raw-notice-visible').value = noticeText;
       document.getElementById('raw-intro-visible').value = get(r, '업체소개');
@@ -799,3 +835,4 @@
 </div>
 </body>
 </html>
+
