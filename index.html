@@ -336,6 +336,16 @@
       });
     }
 
+    function convertOvernightTimes(raw) {
+      if (!raw) return raw;
+      return raw.replace(/(\d{1,2}):(\d{2})(\s*~\s*)(\d{1,2}):(\d{2})/g, (match, sh, sm, sep, eh, em) => {
+        const startH = parseInt(sh, 10);
+        let endH = parseInt(eh, 10);
+        if (endH < startH) endH += 24;
+        return `${sh}:${sm}${sep}${endH}:${em}`;
+      });
+    }
+
     function generateUsagePreview() {
       const name = extractFacilityName();
       const noticeRaw = document.getElementById('raw-notice-visible').value;
@@ -349,7 +359,7 @@
         const hasTimePattern = /\d{1,2}:\d{2}/.test(line);
         const hasRange = /~/.test(line);
         if (hasTimePattern && !hasRange) return '시트누락';
-        return expandOperatingHoursText(line);
+        return expandOperatingHoursText(convertOvernightTimes(line));
       });
       const closedText = closedDaysList.length > 0 ? `매주 ${formatDayList(closedDaysList)}` : '연중무휴';
 
@@ -467,7 +477,10 @@
       const facility = document.getElementById('raw-facilityname-price').value.trim();
       const categoryTag = document.getElementById('raw-categorytag').value.trim();
       const displayName = categoryTag ? `(${categoryTag})${facility}` : facility;
-      document.getElementById('f-pricename').value = displayName ? `[${region}] ${displayName}` : `[${region}]`;
+      const showRegion = REGION_PROFILES[currentRegion] ? REGION_PROFILES[currentRegion].showRegionInPriceName !== false : true;
+      document.getElementById('f-pricename').value = showRegion
+        ? (displayName ? `[${region}] ${displayName}` : `[${region}]`)
+        : displayName;
 
       document.getElementById('f-price-adult-normal').value = document.getElementById('raw-adult-normal').value;
       document.getElementById('f-price-adult-settle').value = document.getElementById('raw-adult-settle').value;
@@ -589,7 +602,8 @@
         holiday: '휴무일(디자인 x)',
         supplierCode: '공급처 코드',
         category: '구분',
-        categoryTag: '카테고리'
+        categoryTag: '카테고리',
+        showRegionInPriceName: false
       }
     };
     let currentRegion = 'chungnam';
