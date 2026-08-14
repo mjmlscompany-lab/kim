@@ -227,7 +227,8 @@
     }
 
     function parseHours(raw) {
-      if (!raw || !raw.trim()) return null;
+      const trimmed = (raw || '').trim();
+      if (!trimmed || /24\s*시간/.test(trimmed)) return { start: '00:00', end: '24:00' };
       const regex = /(\d{1,2})(?::(\d{2}))?\s*시?\s*~\s*(\d{1,2})(?::(\d{2}))?\s*시?/g;
       let match;
       const starts = [];
