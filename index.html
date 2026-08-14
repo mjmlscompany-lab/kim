@@ -771,7 +771,8 @@
 
     function detectReservation(text) {
       const t = text || '';
-      if (/유선\s*예약|전화\s*예약|사전\s*예약|사전\s*문자|문자\s*예약/.test(t)) return { required: '예', schedule: '전화예약' };
+      if (/유선/.test(t)) return { required: '예', schedule: '전화예약' };
+      if (/전화\s*예약|사전\s*예약|사전\s*문자|문자\s*예약/.test(t)) return { required: '예', schedule: '전화예약' };
       if (/홈페이지\s*예약/.test(t)) return { required: '예', schedule: '온라인예약' };
       if (/카카오톡/.test(t)) return { required: '예', schedule: '카카오톡예약' };
       if (/네이버/.test(t)) return { required: '아니오', schedule: null };
