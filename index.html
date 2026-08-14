@@ -676,8 +676,12 @@
     }
 
     function normalizeTilde(text) {
-      // Unify look-alike range separators (fullwidth tilde, wave dash, en/em dash, minus) to ASCII ~
-      return (text || '').replace(/[\uFF5E\u301C\u2013\u2014\u2212]/g, '~');
+      let t = (text || '').replace(/[\uFF5E\u301C\u2013\u2014\u2212]/g, '~');
+      // A plain hyphen used specifically BETWEEN two HH:MM times (e.g. "13:00-21:00")
+      // is a time-range separator, not a regular hyphen — safe to convert since this
+      // function is only ever applied to the operating-hours field, never addresses/phone numbers.
+      t = t.replace(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/g, '$1~$2');
+      return t;
     }
 
     document.getElementById('parseSheetBtn').addEventListener('click', () => {
