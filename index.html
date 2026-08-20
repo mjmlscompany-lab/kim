@@ -478,10 +478,13 @@
       const region = document.getElementById('raw-region').value.trim();
       const facility = document.getElementById('raw-facilityname-price').value.trim();
       const categoryTag = document.getElementById('raw-categorytag').value.trim();
-      const displayName = categoryTag ? `(${categoryTag})${facility}` : facility;
-      const showRegion = REGION_PROFILES[currentRegion] ? REGION_PROFILES[currentRegion].showRegionInPriceName !== false : true;
+      const profile = REGION_PROFILES[currentRegion] || {};
+      const useCategoryBracket = profile.priceCategoryMode === 'bracket';
+      const displayName = (categoryTag && !useCategoryBracket) ? `(${categoryTag})${facility}` : facility;
+      const bracketContent = useCategoryBracket && categoryTag ? categoryTag : region;
+      const showRegion = profile.showRegionInPriceName !== false;
       document.getElementById('f-pricename').value = showRegion
-        ? (displayName ? `[${region}] ${displayName}` : `[${region}]`)
+        ? (displayName ? `[${bracketContent}] ${displayName}` : `[${bracketContent}]`)
         : displayName;
 
       document.getElementById('f-price-adult-normal').value = document.getElementById('raw-adult-normal').value;
@@ -621,7 +624,10 @@
         closing: '마감시간',
         holiday: '휴무일',
         supplierCode: '공급처 코드',
-        category: '구분'
+        category: '구분',
+        categoryTag: '카테고리',
+        showRegionInProductName: false,
+        priceCategoryMode: 'bracket'
       }
     };
     let currentRegion = 'chungnam';
@@ -809,8 +815,12 @@
 
       document.getElementById('f-supplier').value = get(r, 'SUPPLIER_CODE');
       const profile = REGION_PROFILES[currentRegion];
-      const regionTag = city ? `${profile.label}/${city}` : profile.label;
-      document.getElementById('f-productname').value = `${profile.initials}_[${regionTag}] ${name}`;
+      if (profile.showRegionInProductName === false) {
+        document.getElementById('f-productname').value = `${profile.initials}_${name}`;
+      } else {
+        const regionTag = city ? `${profile.label}/${city}` : profile.label;
+        document.getElementById('f-productname').value = `${profile.initials}_[${regionTag}] ${name}`;
+      }
 
       document.getElementById('raw-shortdesc').value = get(r, '제공내역');
       fireInput('raw-shortdesc');
@@ -832,7 +842,7 @@
 
       document.getElementById('raw-region').value = REGION_PROFILES[currentRegion].label;
       document.getElementById('raw-facilityname-price').value = name;
-      document.getElementById('raw-categorytag').value = get(r, 'CATEGORY_TAG');
+      document.getElementById('raw-categorytag').value = cleanCityName(get(r, 'CATEGORY_TAG'));
 
       document.getElementById('raw-notice-visible').value = noticeText;
       document.getElementById('raw-intro-visible').value = get(r, '업체소개');
