@@ -477,9 +477,10 @@
   <script>
     function syncPriceFields() {
       const region = document.getElementById('raw-region').value.trim();
-      const facility = document.getElementById('raw-facilityname-price').value.trim();
+      let facility = document.getElementById('raw-facilityname-price').value.trim();
       const categoryTag = document.getElementById('raw-categorytag').value.trim();
       const profile = REGION_PROFILES[currentRegion] || {};
+      if (profile.priceNameStripDiscount) facility = facility.replace(/\(할인\)$/, '').trim();
       const useCategoryBracket = profile.priceCategoryMode === 'bracket';
       const displayName = (categoryTag && !useCategoryBracket) ? `(${categoryTag})${facility}` : facility;
       const bracketContent = useCategoryBracket && categoryTag ? categoryTag : region;
@@ -644,7 +645,11 @@
         closing: '마감시간',
         holiday: '휴무일',
         supplierCode: '공급처 코드',
-        category: '구분'
+        category: '구분',
+        categoryTag: '카테고리',
+        productNamePrefix: '서울중구투어패스_ ',
+        priceCategoryMode: 'bracket',
+        priceNameStripDiscount: true
       }
     };
     let currentRegion = 'chungnam';
@@ -832,7 +837,9 @@
 
       document.getElementById('f-supplier').value = get(r, 'SUPPLIER_CODE');
       const profile = REGION_PROFILES[currentRegion];
-      if (profile.showRegionInProductName === false) {
+      if (profile.productNamePrefix) {
+        document.getElementById('f-productname').value = `${profile.productNamePrefix}${name}`;
+      } else if (profile.showRegionInProductName === false) {
         document.getElementById('f-productname').value = `${profile.initials}_${name}`;
       } else {
         const regionTag = city ? `${profile.label}/${city}` : profile.label;
