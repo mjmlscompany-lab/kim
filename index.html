@@ -94,6 +94,8 @@
     <button type="button" class="sidebar-item region-tab-btn" data-region="seouljunggu">서울중구 투어패스</button>
     <button type="button" class="sidebar-item region-tab-btn" data-region="yeosu">여수 투어패스</button>
     <button type="button" class="sidebar-item region-tab-btn" data-region="changwon">창원 투어패스</button>
+    <button type="button" class="sidebar-item region-tab-btn" data-region="chuncheon">춘천 투어패스</button>
+    <button type="button" class="sidebar-item region-tab-btn" data-region="danyang">단양 투어패스</button>
   </nav>
 
   <div class="content-area">
@@ -688,6 +690,53 @@
         category: '구분',
         categoryTag: '카테고리',
         priceCategoryMode: 'bracket'
+      },
+      chuncheon: {
+        label: '춘천',
+        initials: '',
+        region: null,
+        facilityName: '시설사명',
+        intro: '업체소개',
+        offer: '제공내역',
+        address: '주소',
+        contact: '연락처',
+        notice: '유의사항',
+        hours: '운영시간',
+        closing: '마감시간',
+        holiday: '휴무일',
+        supplierCode: '공급처 코드',
+        category: '구분',
+        categoryTag: '카테고리',
+        productNamePrefix: '춘천투어패스_',
+        priceCategoryMode: 'bracket'
+      },
+      danyang: {
+        label: '단양',
+        initials: '',
+        region: '지역',
+        facilityName: '시설사명',
+        intro: '시설소개',
+        offer: '제공내역',
+        address: '주소',
+        contact: '연락처',
+        notice: '유의사항(상품페이지)',
+        noticeDetailed: '유의사항(바코드)',
+        hours: '운영시간',
+        closing: null,
+        holiday: '휴무일',
+        supplierCode: '공급처코드',
+        category: '구분',
+        categoryTag: '카테고리',
+        productNamePrefix: '단양투어패스_',
+        priceCategoryMode: 'bracket',
+        priceLabels: {
+          '성인_정상가': ['정상가 성인'],
+          '청소년_정상가': ['정상가 청소년'],
+          '소인_정상가': ['정상가 소인'],
+          '성인_입금가': ['입금가 성인'],
+          '청소년_입금가': ['입금가 청소년'],
+          '소인_입금가': ['입금가 소인']
+        }
       }
     };
     let currentRegion = 'chungnam';
@@ -764,6 +813,8 @@
       // is a time-range separator, not a regular hyphen — safe to convert since this
       // function is only ever applied to the operating-hours field, never addresses/phone numbers.
       t = t.replace(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/g, '$1~$2');
+      // Same idea for "시"-based times (e.g. "09시-18시", "10시 30분-21시")
+      t = t.replace(/(\d{1,2}\s*시\s*(?:\d{1,2}\s*분\s*)?)\s*-\s*(\d{1,2}\s*시\s*(?:\d{1,2}\s*분\s*)?)/g, '$1~$2');
       return t;
     }
 
