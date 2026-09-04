@@ -205,8 +205,8 @@
     const dayChars = ['일','월','화','수','목','금','토'];
     let closedDaysList = [];
 
-    const dayTokenRe = /^(일|월|화|수|목|금|토)(?:요일)?(?:\s*휴무일?)?$/;
-    const dayRangeTokenRe = /^(일|월|화|수|목|금|토)(?:요일)?\s*~\s*(일|월|화|수|목|금|토)(?:요일)?(?:\s*휴무일?)?$/;
+    const dayTokenRe = /^(?:매주\s*)?(일|월|화|수|목|금|토)(?:요일)?(?:\s*휴무일?)?$/;
+    const dayRangeTokenRe = /^(?:매주\s*)?(일|월|화|수|목|금|토)(?:요일)?\s*~\s*(일|월|화|수|목|금|토)(?:요일)?(?:\s*휴무일?)?$/;
 
     function extractDaysFromToken(tok) {
       const rangeMatch = tok.match(dayRangeTokenRe);
